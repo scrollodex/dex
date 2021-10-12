@@ -10,7 +10,7 @@ import (
 
 	"gopkg.in/yaml.v3"
 
-	"github.com/scrollodex/scrollodex/dexmodels"
+	"github.com/scrollodex/dex/dexmodels"
 )
 
 // FSConfig stores configuration settings for the provider.
