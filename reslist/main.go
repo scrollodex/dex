@@ -9,6 +9,8 @@ import (
 // substituting site where a %s appears.
 func New(urlpattern string, site string) (Databaser, error) {
 
+	fmt.Printf("RESLIST New(%q, %q)", urlpattern, site)
+
 	cs := strings.ReplaceAll(urlpattern, "%s", site)
 
 	if strings.HasPrefix(cs, "git@") {
