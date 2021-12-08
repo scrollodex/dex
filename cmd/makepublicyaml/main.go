@@ -42,7 +42,7 @@ func main() {
 	}
 	fmt.Printf("DEBUG: repoURL: %q\n", repoURL)
 
-	dbh, err := reslist.New(repoURL)
+	dbh, err := reslist.New(repoURL, "")
 	if err != nil {
 		log.Fatal(err)
 	}

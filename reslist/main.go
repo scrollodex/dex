@@ -5,19 +5,29 @@ import (
 	"strings"
 )
 
-// New creates a new Databaser object based on URL.
-func New(url string) (Databaser, error) {
+// New creates a new Databaser object based on urlpattern with
+// substituting site where a %s appears.
+func New(urlpattern string, site string) (Databaser, error) {
 
-	if strings.HasPrefix(url, "git@") {
-		//dbh, err = NewGit(GitConfig{repoURL})
-		return nil, fmt.Errorf("reslist.New(%q) failed: NOT IMPLEMENTED", url)
-	} else if strings.HasPrefix(url, "/") || url != "" {
-		dbh, err := NewFS(FSConfig{url})
+	cs := strings.ReplaceAll(urlpattern, "%s", site)
+
+	if strings.HasPrefix(cs, "git@") {
+		dbh, err := NewGit(cs)
 		if err != nil {
-			return nil, fmt.Errorf("reslist.New(%q) failed: %w", url, err)
+			return nil, fmt.Errorf("reslist.NewGit(%q) failed: %w", cs, err)
+		}
+		return dbh, nil
+	} else if strings.HasPrefix(cs, "file:") {
+		cs = strings.TrimPrefix(cs, "file:")
+		dbh, err := NewFS(cs)
+		if err != nil {
+			return nil, fmt.Errorf("reslist.NewFS(%q) failed: %w", cs, err)
 		}
 		return dbh, nil
 	}
-
-	return nil, fmt.Errorf("reslist.New(%q) failed: Invalid URL", url)
+	dbh, err := NewFS(cs)
+	if err != nil {
+		return nil, fmt.Errorf("reslist.NewFS(%q) failed: %w", cs, err)
+	}
+	return dbh, nil
 }

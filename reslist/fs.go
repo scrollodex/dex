@@ -13,24 +13,19 @@ import (
 	"github.com/scrollodex/dex/dexmodels"
 )
 
-// FSConfig stores configuration settings for the provider.
-type FSConfig struct {
-	Directory string
-}
-
 // FSHandle is the handle used to refer to FS.
 type FSHandle struct {
-	config FSConfig
+	directory string
 }
 
 // NewFS creates a new FS object.
-func NewFS(c FSConfig) (Databaser, error) {
+func NewFS(dir string) (Databaser, error) {
 	db := &FSHandle{
-		config: c,
+		directory: dir,
 	}
 
 	for _, n := range []string{"category", "location", "entry"} {
-		err := os.MkdirAll(filepath.Join(db.config.Directory, n), os.ModePerm)
+		err := os.MkdirAll(filepath.Join(db.directory, n), os.ModePerm)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -41,7 +36,7 @@ func NewFS(c FSConfig) (Databaser, error) {
 
 func (rh FSHandle) store(fieldName string, id int, y []byte) error {
 	idStr := fmt.Sprintf("%05d", id)
-	fn := filepath.Join(rh.config.Directory, fieldName, idStr+".yaml")
+	fn := filepath.Join(rh.directory, fieldName, idStr+".yaml")
 	//fmt.Fprintf(os.Stderr, " %s", fn)
 	fmt.Fprintf(os.Stderr, ".")
 	return ioutil.WriteFile(fn, []byte("---\n"+string(y)), 0644)
@@ -76,7 +71,7 @@ func (rh FSHandle) EntryStore(data dexmodels.Entry) error {
 
 // CategoryList returns a list of all categories.
 func (rh FSHandle) CategoryList() ([]dexmodels.Category, error) {
-	fileSpec := filepath.Join(rh.config.Directory, "category", "*.yaml")
+	fileSpec := filepath.Join(rh.directory, "category", "*.yaml")
 	matches, err := filepath.Glob(fileSpec)
 	sort.Strings(matches)
 	if err != nil {
@@ -93,7 +88,7 @@ func (rh FSHandle) CategoryList() ([]dexmodels.Category, error) {
 		}
 		var data dexmodels.Category
 		yaml.Unmarshal(b, &data)
-		chk := filepath.Join(rh.config.Directory, "category",
+		chk := filepath.Join(rh.directory, "category",
 			fmt.Sprintf("%05d.yaml", data.ID))
 		if chk != match {
 			log.Fatalf("File %s and the id: %d within does not match!", match, data.ID)
@@ -106,7 +101,7 @@ func (rh FSHandle) CategoryList() ([]dexmodels.Category, error) {
 
 // LocationList returns a list of all locations.
 func (rh FSHandle) LocationList() ([]dexmodels.Location, error) {
-	fileSpec := filepath.Join(rh.config.Directory, "location", "*.yaml")
+	fileSpec := filepath.Join(rh.directory, "location", "*.yaml")
 	matches, err := filepath.Glob(fileSpec)
 	sort.Strings(matches)
 	if err != nil {
@@ -123,7 +118,7 @@ func (rh FSHandle) LocationList() ([]dexmodels.Location, error) {
 		}
 		var data dexmodels.Location
 		yaml.Unmarshal(b, &data)
-		chk := filepath.Join(rh.config.Directory, "location",
+		chk := filepath.Join(rh.directory, "location",
 			fmt.Sprintf("%05d.yaml", data.ID))
 		if chk != match {
 			log.Fatalf("File %s and the id: %d within does not match!", match, data.ID)
@@ -136,7 +131,7 @@ func (rh FSHandle) LocationList() ([]dexmodels.Location, error) {
 
 // EntryList returns a list of all entries.
 func (rh FSHandle) EntryList() ([]dexmodels.Entry, error) {
-	fileSpec := filepath.Join(rh.config.Directory, "entry", "*.yaml")
+	fileSpec := filepath.Join(rh.directory, "entry", "*.yaml")
 	matches, err := filepath.Glob(fileSpec)
 	sort.Strings(matches)
 	if err != nil {
@@ -154,7 +149,7 @@ func (rh FSHandle) EntryList() ([]dexmodels.Entry, error) {
 		var data dexmodels.Entry
 		yaml.Unmarshal(b, &data)
 		//fmt.Fprintf(os.Stderr, "DEBUG: data = %+v\n", data)
-		chk := filepath.Join(rh.config.Directory, "entry", fmt.Sprintf("%05d.yaml", data.ID))
+		chk := filepath.Join(rh.directory, "entry", fmt.Sprintf("%05d.yaml", data.ID))
 		if chk != match {
 			log.Fatalf("File %s and the id: %d within does not match!", match, data.ID)
 		}
@@ -165,7 +160,7 @@ func (rh FSHandle) EntryList() ([]dexmodels.Entry, error) {
 }
 
 func get(rh FSHandle, table string, id int, data interface{}) (interface{}, error) {
-	fileSpec := filepath.Join(rh.config.Directory, table, fmt.Sprintf("%05d.yaml", id))
+	fileSpec := filepath.Join(rh.directory, table, fmt.Sprintf("%05d.yaml", id))
 	b, err := ioutil.ReadFile(fileSpec)
 	if err != nil {
 		return nil, err

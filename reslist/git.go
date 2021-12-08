@@ -4,21 +4,16 @@ import (
 	"github.com/scrollodex/dex/dexmodels"
 )
 
-// GITConfig stores configuration settings for the provider.
-type GITConfig struct {
-	URL string
-}
-
 // GITHandle is the handle used to refer to GIT.
 type GITHandle struct {
-	config   GITConfig
-	fshandle FSHandle
+	url string
+	//fshandle FSHandle
 }
 
 // NewGIT creates a new GIT object.
-func NewGIT(c GITConfig) (Databaser, error) {
+func NewGit(url string) (Databaser, error) {
 	db := &GITHandle{
-		config: c,
+		url: url,
 	}
 
 	// TODO(tlim): If directory exists, git pull. else git clone
