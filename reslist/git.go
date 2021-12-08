@@ -1,13 +1,19 @@
 package reslist
 
 import (
+	"fmt"
+	"log"
+	"os"
+	"os/exec"
+	"strings"
+
 	"github.com/scrollodex/dex/dexmodels"
 )
 
 // GITHandle is the handle used to refer to GIT.
 type GITHandle struct {
-	url string
-	//fshandle FSHandle
+	url  string
+	fdbh FSHandle
 }
 
 // NewGIT creates a new GIT object.
@@ -16,11 +22,58 @@ func NewGit(url string) (Databaser, error) {
 		url: url,
 	}
 
-	// TODO(tlim): If directory exists, git pull. else git clone
+	// If directory exists, git pull. else git clone
+	dir := whatDir(url)
+	de, err := exists(dir)
+	if err != nil {
+		return nil, err
+	}
+	if de {
+		runCommand("git", "pull")
+	} else {
+		runCommand("git", "clone", url, dir)
+	}
 
-	// TODO(tlim): NewFS and store in db.fshandle
+	// NewFS
+	fdbh, err := NewFS(dir)
+	db.fdbh = fdbh.(FSHandle)
+	if err != nil {
+		return nil, err
+	}
 
 	return db, nil
+}
+
+// whatDir reports the directory that "git clone" will create.
+func whatDir(cs string) string {
+	cs = strings.ReplaceAll(cs, ":", "_")
+	cs = strings.ReplaceAll(cs, "@", "_")
+	cs = strings.ReplaceAll(cs, "/", "_")
+	cs = strings.ReplaceAll(cs, ".", "_")
+	return cs
+}
+
+// exists returns whether the given file or directory exists
+func exists(path string) (bool, error) {
+	_, err := os.Stat(path)
+	if err == nil {
+		return true, nil
+	}
+	if os.IsNotExist(err) {
+		return false, nil
+	}
+	return false, err
+}
+
+func runCommand(name string, arg ...string) error {
+	fmt.Printf("COMMAND: %s %v\n", name, arg)
+	cmd := exec.Command(name, arg...)
+	stdoutStderr, err := cmd.CombinedOutput()
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Printf(" OUTPUT: %s\n", stdoutStderr)
+	return err
 }
 
 // CategoryStore stores a category in stable storage.
